@@ -176,7 +176,7 @@ function mostrarPerfilGuardado() {
     document.getElementById("horaIngreso").disabled = false;
     document.getElementById("horaSalida").disabled = false;
     formHoras.querySelector("button[type='submit']").disabled = false;
-
+    cargarTablaYActualizar(); // Cargar tabla al mostrar perfil
   } else {
     perfilContainer.style.display = "block";
     formHoras.style.display = "none";
@@ -256,6 +256,18 @@ function getWeekDates() {
 // Cargar tabla de horas
 async function cargarTablaYActualizar(nombre = localStorage.getItem("nombreTrabajador")) {
   console.log("Cargando tabla para usuario:", nombre); // Depuración
+  if (!nombre) {
+    console.warn("No hay usuario en localStorage, tabla no se cargará.");
+    tablaCuerpo.innerHTML = `
+      <tr>
+        <td colspan="3" style="color: #e74c3c; padding: 20px;">
+          <i class="fas fa-exclamation-triangle"></i> No has iniciado sesión. Ingresa tu nombre.
+        </td>
+      </tr>
+    `;
+    tablaSemanal.style.display = "block";
+    return;
+  }
 
   try {
     let registros = [];
