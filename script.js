@@ -173,12 +173,17 @@ function mostrarPerfilGuardado() {
     perfilActual.textContent = perfilGuardado;
     errorActualizar.style.display = "none";
     tablaSemanal.style.display = "block";
-    cargarTablaYActualizar(perfilGuardado);
+    document.getElementById("horaIngreso").disabled = false;
+    document.getElementById("horaSalida").disabled = false;
+    formHoras.querySelector("button[type='submit']").disabled = false;
   } else {
     perfilContainer.style.display = "block";
     formHoras.style.display = "none";
     errorActualizar.style.display = "none";
     tablaSemanal.style.display = "none";
+    document.getElementById("horaIngreso").disabled = true;
+    document.getElementById("horaSalida").disabled = true;
+    formHoras.querySelector("button[type='submit']").disabled = true;
   }
   successMessage.style.display = "none";
 }
@@ -258,7 +263,7 @@ async function cargarTablaYActualizar(nombre) {
       const res = await fetch(`${API_URL}/latest`, {
         headers: { "X-Master-Key": MASTER_KEY }
       });
-      if (!res.ok) throw new Error(`Error al obtener datos: ${res.status}`);
+      if (!res.ok) throw new Error(`Error al obtener datos: ${res.status} - ${res.statusText}`);
       const data = await res.json();
       registros = data.record || [];
       localStorage.setItem('cachedRegistros', JSON.stringify(registros));
@@ -316,7 +321,7 @@ async function sincronizarAccionesPendientes() {
     const res = await fetch(`${API_URL}/latest`, {
       headers: { "X-Master-Key": MASTER_KEY }
     });
-    if (!res.ok) throw new Error(`Error al obtener datos: ${res.status}`);
+    if (!res.ok) throw new Error(`Error al obtener datos: ${res.status} - ${res.statusText}`);
     const data = await res.json();
     let actuales = data.record || [];
 
@@ -335,7 +340,7 @@ async function sincronizarAccionesPendientes() {
       body: JSON.stringify(actuales)
     });
 
-    if (!putRes.ok) throw new Error(`Error al sincronizar: ${putRes.status}`);
+    if (!putRes.ok) throw new Error(`Error al sincronizar: ${putRes.status} - ${putRes.statusText}`);
     localStorage.setItem('cachedRegistros', JSON.stringify(actuales));
     localStorage.removeItem('pendingActions');
     if (localStorage.getItem("nombreTrabajador")) {
@@ -411,7 +416,12 @@ btnConfirmar.addEventListener("click", async () => {
       registroPendiente = null;
       confirmacion.style.display = "none";
       overlay.style.display = "none";
-      formHoras.reset();
+      if (formHoras && formHoras instanceof HTMLFormElement) {
+        formHoras.reset();
+      } else {
+        document.getElementById("horaIngreso").value = "";
+        document.getElementById("horaSalida").value = "";
+      }
       successMessage.style.display = "block";
       setTimeout(() => {
         successMessage.style.display = "none";
@@ -421,7 +431,7 @@ btnConfirmar.addEventListener("click", async () => {
       const res = await fetch(`${API_URL}/latest`, {
         headers: { "X-Master-Key": MASTER_KEY }
       });
-      if (!res.ok) throw new Error(`Error al obtener datos: ${res.status}`);
+      if (!res.ok) throw new Error(`Error en la solicitud: ${res.status} - ${res.statusText}`);
       const data = await res.json();
       let actuales = data.record || [];
       actuales.push(registroPendiente);
@@ -434,14 +444,18 @@ btnConfirmar.addEventListener("click", async () => {
         },
         body: JSON.stringify(actuales)
       });
-
-      if (!putRes.ok) throw new Error(`Error al guardar: ${putRes.status}`);
+      if (!putRes.ok) throw new Error(`Error al guardar: ${putRes.status} - ${putRes.statusText}`);
       localStorage.setItem('cachedRegistros', JSON.stringify(actuales));
 
       registroPendiente = null;
       confirmacion.style.display = "none";
       overlay.style.display = "none";
-      formHoras.reset();
+      if (formHoras && formHoras instanceof HTMLFormElement) {
+        formHoras.reset();
+      } else {
+        document.getElementById("horaIngreso").value = "";
+        document.getElementById("horaSalida").value = "";
+      }
       successMessage.style.display = "block";
       setTimeout(() => {
         successMessage.style.display = "none";
@@ -449,7 +463,7 @@ btnConfirmar.addEventListener("click", async () => {
       cargarTablaYActualizar(localStorage.getItem("nombreTrabajador"));
     }
   } catch (error) {
-    console.error("Error enviando horas:", error);
+    console.error("Error detallado:", error);
     showError("Error al enviar horas: " + error.message);
   } finally {
     btnConfirmar.innerHTML = '<i class="fas fa-check"></i> Confirmar';
@@ -470,9 +484,11 @@ btnActualizarDatos.addEventListener("click", () => {
   localStorage.removeItem("nombreTrabajador");
   mostrarPerfilGuardado();
   inputNombre.value = "";
-  document.getElementById("horaIngreso").disabled = false;
-  document.getElementById("horaSalida").disabled = false;
-  formHoras.querySelector("button[type='submit']").disabled = false;
+  document.getElementById("horaIngreso").value = "";
+  document.getElementById("horaSalida").value = "";
+  document.getElementById("horaIngreso").disabled = true;
+  document.getElementById("horaSalida").disabled = true;
+  formHoras.querySelector("button[type='submit']").disabled = true;
   tablaSemanal.style.display = "none";
 });
 
