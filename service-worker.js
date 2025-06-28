@@ -6,6 +6,7 @@ const urlsToCache = [
   '/styles.css',
   '/script.js',
   '/manifest.json',
+  '/service-worker.js',
   LOGO_URL,
   'logo/logo-192.png',
   'logo/logo-512.png',
