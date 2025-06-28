@@ -226,6 +226,13 @@ function calcularHoras(inicio, fin) {
   return totalHoras.toFixed(2);
 }
 
+// Formatear horas para mostrar en la tabla
+function formatHours(hours) {
+  if (hours === 0 || isNaN(hours)) return "-";
+  const rounded = Math.round(hours * 10) / 10; // Redondea a un decimal
+  return rounded.toFixed(1).replace(/\.0$/, '') + "hs"; // Elimina .0 si es entero
+}
+
 // Obtener fechas de la semana actual
 function getWeekDates() {
   const today = new Date();
@@ -240,7 +247,7 @@ function getWeekDates() {
     week.push({
       date: date.toISOString().split('T')[0],
       day: date.toLocaleDateString('es-ES', { weekday: 'long' }),
-      formattedDate: date.toLocaleDateString('es-ES')
+      formattedDate: date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/')
     });
   }
   return week;
@@ -317,7 +324,7 @@ async function cargarTablaYActualizar(nombre = localStorage.getItem("nombreTraba
           <tr>
             <td class="day-name">${day.charAt(0).toUpperCase() + day.slice(1)}</td>
             <td class="date-cell">${formattedDate}</td>
-            <td>${registrosDelDia.length > 0 ? `<span class="hours-badge">${totalHorasDia.toFixed(2)}h</span>` : '<span class="no-hours">-</span>'}</td>
+            <td>${registrosDelDia.length > 0 ? `<span class="hours-badge">${formatHours(totalHorasDia)}</span>` : '<span class="no-hours">-</span>'}</td>
           </tr>
         `;
       });
@@ -325,7 +332,7 @@ async function cargarTablaYActualizar(nombre = localStorage.getItem("nombreTraba
       tablaCuerpo.innerHTML += `
         <tr class="total-row">
           <td colspan="2"><strong>Total Semanal</strong></td>
-          <td><span class="hours-badge">${totalHorasAcumuladas.toFixed(2)}h</span></td>
+          <td><span class="hours-badge">${formatHours(totalHorasAcumuladas)}</span></td>
         </tr>
       `;
     }
