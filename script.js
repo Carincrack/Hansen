@@ -1,4 +1,4 @@
-const PWA_VERSION = '2.0.0';
+const PWA_VERSION = '2.0.1'; // Incrementé la versión para forzar una actualización del caché
 const CACHE_NAME = `hacienda-hansen-v${PWA_VERSION}`;
 const LOGO_URL = 'https://i.ibb.co/mCDdH6wt/logo.jpg';
 
@@ -14,13 +14,11 @@ async function generateIcon(size) {
       canvas.width = size;
       canvas.height = size;
       
-      // Crear fondo circular
       ctx.beginPath();
       ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
       ctx.fillStyle = '#2E8B57';
       ctx.fill();
       
-      // Dibujar imagen centrada
       const scale = Math.min(size / img.width, size / img.height) * 0.8;
       const x = (size - img.width * scale) / 2;
       const y = (size - img.height * scale) / 2;
@@ -52,10 +50,8 @@ async function setupIcons() {
       iconUrls[size] = URL.createObjectURL(blob);
     });
 
-    // Configurar favicon
     document.getElementById('favicon').href = iconUrls[32];
     
-    // Configurar Apple Touch Icons
     document.getElementById('apple-touch-icon').href = iconUrls[180];
     document.getElementById('apple-touch-icon-57').href = iconUrls[57];
     document.getElementById('apple-touch-icon-60').href = iconUrls[60];
@@ -76,51 +72,49 @@ async function setupIcons() {
 
 // Configurar manifest
 async function setupManifest(iconUrls) {
-  const manifestData = {
-    "name": "Registro de Horas - Hacienda Hansen",
-    "short_name": "Hacienda Hansen",
-    "description": "Sistema de registro de horas de empleados para Hacienda Hansen",
-    "start_url": "/index.html",
-    "display": "standalone",
-    "background_color": "#667eea",
-    "theme_color": "#2E8B57",
-    "icons": [
-      {
-        "src": iconUrls[192] || '/logo-192.png',
-        "sizes": "192x192",
-        "type": "image/png",
-        "purpose": "any maskable"
-      },
-      {
-        "src": iconUrls[512] || '/logo-512.png',
-        "sizes": "512x512",
-        "type": "image/png",
-        "purpose": "any maskable"
-      }
-    ],
-    "lang": "es-ES",
-    "scope": "/"
-  };
+  try {
+    const manifestData = {
+      "name": "Registro de Horas - Hacienda Hansen",
+      "short_name": "Hacienda Hansen",
+      "description": "Sistema de registro de horas de empleados para Hacienda Hansen",
+      "start_url": "/index.html",
+      "display": "standalone",
+      "background_color": "#667eea",
+      "theme_color": "#2E8B57",
+      "icons": [
+        { "src": iconUrls[192] || '/logo-192.png', "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+        { "src": iconUrls[512] || '/logo-512.png', "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+      ],
+      "lang": "es-ES",
+      "scope": "/"
+    };
 
-  const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
-  const manifestURL = URL.createObjectURL(manifestBlob);
-  document.querySelector('link[rel="manifest"]').setAttribute('href', manifestURL);
+    const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+    const manifestURL = URL.createObjectURL(manifestBlob);
+    document.querySelector('link[rel="manifest"]').setAttribute('href', manifestURL);
+    console.log('Manifest configurado con URL:', manifestURL);
+  } catch (error) {
+    console.error('Error configurando manifest:', error);
+  }
 }
 
 // Registrar Service Worker
 async function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register('service-worker.js');
-      console.log('Service Worker registrado:', registration);
-      
-      if ('sync' in navigator.serviceWorker.registration) {
-        registration.sync.register('sync-hours');
+      const registration = await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
+      console.log('Service Worker registrado exitosamente:', registration);
+
+      if ('sync' in registration) {
+        await registration.sync.register('sync-hours');
+        console.log('Sincronización en segundo plano registrada');
       }
       return registration;
     } catch (error) {
       console.error('Error registrando Service Worker:', error);
     }
+  } else {
+    console.warn('Service Worker no soportado en este navegador');
   }
 }
 
@@ -255,7 +249,7 @@ function getWeekDates() {
 
 // Cargar tabla de horas
 async function cargarTablaYActualizar(nombre = localStorage.getItem("nombreTrabajador")) {
-  console.log("Cargando tabla para usuario:", nombre); // Depuración
+  console.log("Cargando tabla para usuario:", nombre);
   if (!nombre) {
     console.warn("No hay usuario en localStorage, tabla no se cargará.");
     tablaCuerpo.innerHTML = `
@@ -296,9 +290,8 @@ async function cargarTablaYActualizar(nombre = localStorage.getItem("nombreTraba
       localStorage.setItem('cachedRegistros', JSON.stringify(registros));
     }
 
-    // Filtrar solo el usuario actual desde localStorage
     const delUsuario = registros.filter(r => r.nombre === nombre);
-    console.log("Registros filtrados para", nombre, ":", delUsuario); // Depuración
+    console.log("Registros filtrados para", nombre, ":", delUsuario);
     const week = getWeekDates();
     let totalHorasAcumuladas = 0;
 
@@ -533,9 +526,15 @@ btnActualizarDatos.addEventListener("click", () => {
 
 // Inicializar
 async function init() {
+  console.log('Iniciando aplicación PWA...');
   const iconUrls = await setupIcons();
   await setupManifest(iconUrls);
-  await registerServiceWorker();
+  const swRegistration = await registerServiceWorker();
+  if (swRegistration && swRegistration.active) {
+    console.log('Service Worker activo, PWA funcional');
+  } else {
+    console.warn('Service Worker no activo, revisa la consola para errores');
+  }
   mostrarPerfilGuardado();
 }
 
