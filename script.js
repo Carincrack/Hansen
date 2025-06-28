@@ -197,7 +197,12 @@ function guardarPerfil() {
   }
   localStorage.setItem("nombreTrabajador", nombre);
   mostrarPerfilGuardado();
-  formHoras.reset();
+  if (formHoras && formHoras instanceof HTMLFormElement) {
+    formHoras.reset();
+  } else {
+    document.getElementById("horaIngreso").value = "";
+    document.getElementById("horaSalida").value = "";
+  }
 }
 
 // Mostrar error
@@ -241,7 +246,8 @@ function getWeekDates() {
 }
 
 // Cargar tabla de horas
-async function cargarTablaYActualizar(nombre) {
+async function cargarTablaYActualizar(nombre = localStorage.getItem("nombreTrabajador")) {
+  console.log("Cargando tabla para usuario:", nombre); // Depuración
   try {
     let registros = [];
     if (!navigator.onLine) {
@@ -269,7 +275,9 @@ async function cargarTablaYActualizar(nombre) {
       localStorage.setItem('cachedRegistros', JSON.stringify(registros));
     }
 
+    // Filtrar solo el usuario actual desde localStorage
     const delUsuario = registros.filter(r => r.nombre === nombre);
+    console.log("Registros filtrados para", nombre, ":", delUsuario); // Depuración
     const week = getWeekDates();
     let totalHorasAcumuladas = 0;
 
@@ -344,7 +352,7 @@ async function sincronizarAccionesPendientes() {
     localStorage.setItem('cachedRegistros', JSON.stringify(actuales));
     localStorage.removeItem('pendingActions');
     if (localStorage.getItem("nombreTrabajador")) {
-      cargarTablaYActualizar(localStorage.getItem("nombreTrabajador"));
+      cargarTablaYActualizar();
     }
   } catch (error) {
     console.error("Error sincronizando acciones:", error);
@@ -426,7 +434,7 @@ btnConfirmar.addEventListener("click", async () => {
       setTimeout(() => {
         successMessage.style.display = "none";
       }, 3000);
-      cargarTablaYActualizar(localStorage.getItem("nombreTrabajador"));
+      cargarTablaYActualizar();
     } else {
       const res = await fetch(`${API_URL}/latest`, {
         headers: { "X-Master-Key": MASTER_KEY }
@@ -460,7 +468,7 @@ btnConfirmar.addEventListener("click", async () => {
       setTimeout(() => {
         successMessage.style.display = "none";
       }, 3000);
-      cargarTablaYActualizar(localStorage.getItem("nombreTrabajador"));
+      cargarTablaYActualizar();
     }
   } catch (error) {
     console.error("Error detallado:", error);
