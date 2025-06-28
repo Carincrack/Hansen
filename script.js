@@ -176,6 +176,7 @@ function mostrarPerfilGuardado() {
     document.getElementById("horaIngreso").disabled = false;
     document.getElementById("horaSalida").disabled = false;
     formHoras.querySelector("button[type='submit']").disabled = false;
+
   } else {
     perfilContainer.style.display = "block";
     formHoras.style.display = "none";
@@ -225,6 +226,13 @@ function calcularHoras(inicio, fin) {
   return totalHoras.toFixed(2);
 }
 
+// Formatear horas para mostrar en la tabla
+function formatHours(hours) {
+  if (hours === 0 || isNaN(hours)) return "-";
+  const rounded = Math.round(hours * 10) / 10; // Redondea a un decimal
+  return rounded.toFixed(1).replace(/\.0$/, '') + "hs"; // Elimina .0 si es entero
+}
+
 // Obtener fechas de la semana actual
 function getWeekDates() {
   const today = new Date();
@@ -239,7 +247,7 @@ function getWeekDates() {
     week.push({
       date: date.toISOString().split('T')[0],
       day: date.toLocaleDateString('es-ES', { weekday: 'long' }),
-      formattedDate: date.toLocaleDateString('es-ES')
+      formattedDate: date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/')
     });
   }
   return week;
@@ -248,6 +256,7 @@ function getWeekDates() {
 // Cargar tabla de horas
 async function cargarTablaYActualizar(nombre = localStorage.getItem("nombreTrabajador")) {
   console.log("Cargando tabla para usuario:", nombre); // Depuración
+
   try {
     let registros = [];
     if (!navigator.onLine) {
@@ -282,29 +291,39 @@ async function cargarTablaYActualizar(nombre = localStorage.getItem("nombreTraba
     let totalHorasAcumuladas = 0;
 
     tablaCuerpo.innerHTML = "";
-    week.forEach(({ date, day, formattedDate }) => {
-      const registrosDelDia = delUsuario.filter(r => r.fecha === date);
-      let totalHorasDia = 0;
-      if (registrosDelDia.length > 0) {
-        totalHorasDia = registrosDelDia.reduce((acc, curr) => acc + curr.totalHoras, 0);
-        totalHorasAcumuladas += totalHorasDia;
-      }
-
-      tablaCuerpo.innerHTML += `
+    if (delUsuario.length === 0) {
+      tablaCuerpo.innerHTML = `
         <tr>
-          <td class="day-name">${day.charAt(0).toUpperCase() + day.slice(1)}</td>
-          <td class="date-cell">${formattedDate}</td>
-          <td>${registrosDelDia.length > 0 ? `<span class="hours-badge">${totalHorasDia.toFixed(2)}h</span>` : '<span class="no-hours">-</span>'}</td>
+          <td colspan="3" style="color: #e74c3c; padding: 20px;">
+            <i class="fas fa-exclamation-triangle"></i> No hay registros para ${nombre}.
+          </td>
         </tr>
       `;
-    });
+    } else {
+      week.forEach(({ date, day, formattedDate }) => {
+        const registrosDelDia = delUsuario.filter(r => r.fecha === date);
+        let totalHorasDia = 0;
+        if (registrosDelDia.length > 0) {
+          totalHorasDia = registrosDelDia.reduce((acc, curr) => acc + curr.totalHoras, 0);
+          totalHorasAcumuladas += totalHorasDia;
+        }
 
-    tablaCuerpo.innerHTML += `
-      <tr class="total-row">
-        <td colspan="2"><strong>Total Semanal</strong></td>
-        <td><span class="hours-badge">${totalHorasAcumuladas.toFixed(2)}h</span></td>
-      </tr>
-    `;
+        tablaCuerpo.innerHTML += `
+          <tr>
+            <td class="day-name">${day.charAt(0).toUpperCase() + day.slice(1)}</td>
+            <td class="date-cell">${formattedDate}</td>
+            <td>${registrosDelDia.length > 0 ? `<span class="hours-badge">${formatHours(totalHorasDia)}</span>` : '<span class="no-hours">-</span>'}</td>
+          </tr>
+        `;
+      });
+
+      tablaCuerpo.innerHTML += `
+        <tr class="total-row">
+          <td colspan="2"><strong>Total Semanal</strong></td>
+          <td><span class="hours-badge">${formatHours(totalHorasAcumuladas)}</span></td>
+        </tr>
+      `;
+    }
     tablaSemanal.style.display = "block";
   } catch (error) {
     console.error("Error cargando la tabla:", error);
