@@ -173,12 +173,18 @@ function mostrarPerfilGuardado() {
     perfilActual.textContent = perfilGuardado;
     errorActualizar.style.display = "none";
     tablaSemanal.style.display = "block";
-    cargarTablaYActualizar(perfilGuardado);
+    document.getElementById("horaIngreso").disabled = false;
+    document.getElementById("horaSalida").disabled = false;
+    formHoras.querySelector("button[type='submit']").disabled = false;
+    cargarTablaYActualizar(); // Cargar tabla al mostrar perfil
   } else {
     perfilContainer.style.display = "block";
     formHoras.style.display = "none";
     errorActualizar.style.display = "none";
     tablaSemanal.style.display = "none";
+    document.getElementById("horaIngreso").disabled = true;
+    document.getElementById("horaSalida").disabled = true;
+    formHoras.querySelector("button[type='submit']").disabled = true;
   }
   successMessage.style.display = "none";
 }
@@ -192,7 +198,12 @@ function guardarPerfil() {
   }
   localStorage.setItem("nombreTrabajador", nombre);
   mostrarPerfilGuardado();
-  formHoras.reset();
+  if (formHoras && formHoras instanceof HTMLFormElement) {
+    formHoras.reset();
+  } else {
+    document.getElementById("horaIngreso").value = "";
+    document.getElementById("horaSalida").value = "";
+  }
 }
 
 // Mostrar error
@@ -236,7 +247,21 @@ function getWeekDates() {
 }
 
 // Cargar tabla de horas
-async function cargarTablaYActualizar(nombre) {
+async function cargarTablaYActualizar(nombre = localStorage.getItem("nombreTrabajador")) {
+  console.log("Cargando tabla para usuario:", nombre); // Depuración
+  if (!nombre) {
+    console.warn("No hay usuario en localStorage, tabla no se cargará.");
+    tablaCuerpo.innerHTML = `
+      <tr>
+        <td colspan="3" style="color: #e74c3c; padding: 20px;">
+          <i class="fas fa-exclamation-triangle"></i> No has iniciado sesión. Ingresa tu nombre.
+        </td>
+      </tr>
+    `;
+    tablaSemanal.style.display = "block";
+    return;
+  }
+
   try {
     let registros = [];
     if (!navigator.onLine) {
@@ -258,40 +283,52 @@ async function cargarTablaYActualizar(nombre) {
       const res = await fetch(`${API_URL}/latest`, {
         headers: { "X-Master-Key": MASTER_KEY }
       });
-      if (!res.ok) throw new Error(`Error al obtener datos: ${res.status}`);
+      if (!res.ok) throw new Error(`Error al obtener datos: ${res.status} - ${res.statusText}`);
       const data = await res.json();
       registros = data.record || [];
       localStorage.setItem('cachedRegistros', JSON.stringify(registros));
     }
 
+    // Filtrar solo el usuario actual desde localStorage
     const delUsuario = registros.filter(r => r.nombre === nombre);
+    console.log("Registros filtrados para", nombre, ":", delUsuario); // Depuración
     const week = getWeekDates();
     let totalHorasAcumuladas = 0;
 
     tablaCuerpo.innerHTML = "";
-    week.forEach(({ date, day, formattedDate }) => {
-      const registrosDelDia = delUsuario.filter(r => r.fecha === date);
-      let totalHorasDia = 0;
-      if (registrosDelDia.length > 0) {
-        totalHorasDia = registrosDelDia.reduce((acc, curr) => acc + curr.totalHoras, 0);
-        totalHorasAcumuladas += totalHorasDia;
-      }
-
-      tablaCuerpo.innerHTML += `
+    if (delUsuario.length === 0) {
+      tablaCuerpo.innerHTML = `
         <tr>
-          <td class="day-name">${day.charAt(0).toUpperCase() + day.slice(1)}</td>
-          <td class="date-cell">${formattedDate}</td>
-          <td>${registrosDelDia.length > 0 ? `<span class="hours-badge">${totalHorasDia.toFixed(2)}h</span>` : '<span class="no-hours">-</span>'}</td>
+          <td colspan="3" style="color: #e74c3c; padding: 20px;">
+            <i class="fas fa-exclamation-triangle"></i> No hay registros para ${nombre}.
+          </td>
         </tr>
       `;
-    });
+    } else {
+      week.forEach(({ date, day, formattedDate }) => {
+        const registrosDelDia = delUsuario.filter(r => r.fecha === date);
+        let totalHorasDia = 0;
+        if (registrosDelDia.length > 0) {
+          totalHorasDia = registrosDelDia.reduce((acc, curr) => acc + curr.totalHoras, 0);
+          totalHorasAcumuladas += totalHorasDia;
+        }
 
-    tablaCuerpo.innerHTML += `
-      <tr class="total-row">
-        <td colspan="2"><strong>Total Semanal</strong></td>
-        <td><span class="hours-badge">${totalHorasAcumuladas.toFixed(2)}h</span></td>
-      </tr>
-    `;
+        tablaCuerpo.innerHTML += `
+          <tr>
+            <td class="day-name">${day.charAt(0).toUpperCase() + day.slice(1)}</td>
+            <td class="date-cell">${formattedDate}</td>
+            <td>${registrosDelDia.length > 0 ? `<span class="hours-badge">${totalHorasDia.toFixed(2)}h</span>` : '<span class="no-hours">-</span>'}</td>
+          </tr>
+        `;
+      });
+
+      tablaCuerpo.innerHTML += `
+        <tr class="total-row">
+          <td colspan="2"><strong>Total Semanal</strong></td>
+          <td><span class="hours-badge">${totalHorasAcumuladas.toFixed(2)}h</span></td>
+        </tr>
+      `;
+    }
     tablaSemanal.style.display = "block";
   } catch (error) {
     console.error("Error cargando la tabla:", error);
@@ -316,7 +353,7 @@ async function sincronizarAccionesPendientes() {
     const res = await fetch(`${API_URL}/latest`, {
       headers: { "X-Master-Key": MASTER_KEY }
     });
-    if (!res.ok) throw new Error(`Error al obtener datos: ${res.status}`);
+    if (!res.ok) throw new Error(`Error al obtener datos: ${res.status} - ${res.statusText}`);
     const data = await res.json();
     let actuales = data.record || [];
 
@@ -335,11 +372,11 @@ async function sincronizarAccionesPendientes() {
       body: JSON.stringify(actuales)
     });
 
-    if (!putRes.ok) throw new Error(`Error al sincronizar: ${putRes.status}`);
+    if (!putRes.ok) throw new Error(`Error al sincronizar: ${putRes.status} - ${putRes.statusText}`);
     localStorage.setItem('cachedRegistros', JSON.stringify(actuales));
     localStorage.removeItem('pendingActions');
     if (localStorage.getItem("nombreTrabajador")) {
-      cargarTablaYActualizar(localStorage.getItem("nombreTrabajador"));
+      cargarTablaYActualizar();
     }
   } catch (error) {
     console.error("Error sincronizando acciones:", error);
@@ -411,17 +448,22 @@ btnConfirmar.addEventListener("click", async () => {
       registroPendiente = null;
       confirmacion.style.display = "none";
       overlay.style.display = "none";
-      formHoras.reset();
+      if (formHoras && formHoras instanceof HTMLFormElement) {
+        formHoras.reset();
+      } else {
+        document.getElementById("horaIngreso").value = "";
+        document.getElementById("horaSalida").value = "";
+      }
       successMessage.style.display = "block";
       setTimeout(() => {
         successMessage.style.display = "none";
       }, 3000);
-      cargarTablaYActualizar(localStorage.getItem("nombreTrabajador"));
+      cargarTablaYActualizar();
     } else {
       const res = await fetch(`${API_URL}/latest`, {
         headers: { "X-Master-Key": MASTER_KEY }
       });
-      if (!res.ok) throw new Error(`Error al obtener datos: ${res.status}`);
+      if (!res.ok) throw new Error(`Error en la solicitud: ${res.status} - ${res.statusText}`);
       const data = await res.json();
       let actuales = data.record || [];
       actuales.push(registroPendiente);
@@ -434,22 +476,26 @@ btnConfirmar.addEventListener("click", async () => {
         },
         body: JSON.stringify(actuales)
       });
-
-      if (!putRes.ok) throw new Error(`Error al guardar: ${putRes.status}`);
+      if (!putRes.ok) throw new Error(`Error al guardar: ${putRes.status} - ${putRes.statusText}`);
       localStorage.setItem('cachedRegistros', JSON.stringify(actuales));
 
       registroPendiente = null;
       confirmacion.style.display = "none";
       overlay.style.display = "none";
-      formHoras.reset();
+      if (formHoras && formHoras instanceof HTMLFormElement) {
+        formHoras.reset();
+      } else {
+        document.getElementById("horaIngreso").value = "";
+        document.getElementById("horaSalida").value = "";
+      }
       successMessage.style.display = "block";
       setTimeout(() => {
         successMessage.style.display = "none";
       }, 3000);
-      cargarTablaYActualizar(localStorage.getItem("nombreTrabajador"));
+      cargarTablaYActualizar();
     }
   } catch (error) {
-    console.error("Error enviando horas:", error);
+    console.error("Error detallado:", error);
     showError("Error al enviar horas: " + error.message);
   } finally {
     btnConfirmar.innerHTML = '<i class="fas fa-check"></i> Confirmar';
@@ -470,9 +516,11 @@ btnActualizarDatos.addEventListener("click", () => {
   localStorage.removeItem("nombreTrabajador");
   mostrarPerfilGuardado();
   inputNombre.value = "";
-  document.getElementById("horaIngreso").disabled = false;
-  document.getElementById("horaSalida").disabled = false;
-  formHoras.querySelector("button[type='submit']").disabled = false;
+  document.getElementById("horaIngreso").value = "";
+  document.getElementById("horaSalida").value = "";
+  document.getElementById("horaIngreso").disabled = true;
+  document.getElementById("horaSalida").disabled = true;
+  formHoras.querySelector("button[type='submit']").disabled = true;
   tablaSemanal.style.display = "none";
 });
 
