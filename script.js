@@ -221,8 +221,15 @@ function calcularHoras(inicio, fin) {
 }
 
 // Formatear horas para mostrar en la tabla
+// Formatear horas para mostrar en la tabla
+// Formatear horas para mostrar en la tabla
 function formatHours(hours) {
   if (hours === 0 || isNaN(hours)) return "-";
+  const decimalPart = hours % 1; // Obtener la parte decimal
+  if (decimalPart === 0.5) {
+    const wholePart = Math.floor(hours); // Parte entera
+    return `${wholePart}.30hs`; // Formato como 5.30hs para 5.5
+  }
   const rounded = Math.round(hours * 10) / 10; // Redondea a un decimal
   return rounded.toFixed(1).replace(/\.0$/, '') + "hs"; // Elimina .0 si es entero
 }
@@ -539,3 +546,38 @@ async function init() {
 }
 
 init();
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Activar animaciones después de cargar la página
+  setTimeout(function() {
+    document.body.classList.add('page-loaded');
+  }, 100);
+  
+  // Efecto hover mejorado para botones
+  const buttons = document.querySelectorAll('.btn');
+  buttons.forEach(button => {
+    button.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-3px)';
+    });
+    button.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+    });
+  });
+  
+  // Efecto hover para tarjetas
+  const cards = document.querySelectorAll('.main-card');
+  cards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-5px)';
+      this.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1)';
+    });
+    card.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+      this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.05)';
+    });
+  });
+});

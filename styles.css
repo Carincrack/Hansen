@@ -4,6 +4,68 @@
   box-sizing: border-box;
 }
 
+/* Animaciones clave */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideInFromLeft {
+  from { transform: translateX(-50px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInFromRight {
+  from { transform: translateX(50px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes pulseSpin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes modalAppear {
+  0% { 
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  100% { 
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  80% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Estilos base */
 body {
   font-family: 'Segoe UI', 'Roboto', Tahoma, Geneva, Verdana, sans-serif;
   background: #F5F6FA;
@@ -11,14 +73,37 @@ body {
   padding: 20px 10px;
   color: #2A4066;
   line-height: 1.6;
+  position: relative;
+  overflow-x: hidden;
+}
+
+body:before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  background: linear-gradient(135deg, #F5F6FA 0%, #e8eaf1 100%);
+  z-index: -1;
+}
+
+body:not(.page-loaded) .header,
+body:not(.page-loaded) .main-card,
+body:not(.page-loaded) .weekly-table-container {
+  opacity: 0;
+  animation: none;
 }
 
 .container {
   max-width: 1000px;
   margin: 0 auto;
   padding: 0 15px;
+  position: relative;
+  z-index: 1;
 }
 
+/* Header */
 .header {
   background: #FFFFFF;
   border-radius: 12px;
@@ -27,6 +112,7 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   text-align: center;
   border: 1px solid #E0E4E8;
+  animation: fadeIn 0.8s ease-out forwards;
 }
 
 .logo {
@@ -36,6 +122,11 @@ body {
   overflow: hidden;
   border-radius: 50%;
   border: 4px solid #1A3C34;
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: rotate(5deg) scale(1.05);
 }
 
 .logo img {
@@ -50,6 +141,7 @@ body {
   font-weight: 700;
   margin-bottom: 10px;
   text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .header .subtitle {
@@ -58,6 +150,7 @@ body {
   font-weight: 400;
 }
 
+/* Tarjetas principales */
 .main-card {
   background: #FFFFFF;
   border-radius: 12px;
@@ -65,6 +158,14 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border: 1px solid #E0E4E8;
   margin-bottom: 20px;
+  animation: scaleIn 0.6s ease-out 0.2s forwards;
+  opacity: 0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.main-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .profile-section {
@@ -81,6 +182,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  animation: slideInFromLeft 0.6s ease-out forwards;
 }
 
 .form-group {
@@ -101,7 +203,7 @@ body {
   border: 2px solid #E0E4E8;
   border-radius: 8px;
   font-size: 1rem;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: #F9FAFB;
 }
 
@@ -109,7 +211,8 @@ body {
   outline: none;
   border-color: #1A3C34;
   background: #FFFFFF;
-  box-shadow: 0 0 0 3px rgba(26, 60, 52, 0.1);
+  box-shadow: 0 0 0 4px rgba(26, 60, 52, 0.2);
+  transform: translateY(-2px);
 }
 
 .time-inputs {
@@ -118,6 +221,7 @@ body {
   gap: 15px;
 }
 
+/* Botones */
 .btn {
   padding: 12px 24px;
   border: none;
@@ -125,35 +229,53 @@ body {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(-100%);
+  transition: transform 0.4s ease;
+}
+
+.btn:hover:after {
+  transform: translateX(0);
 }
 
 .btn-primary {
-  background: #1A3C34;
+  background: #335574;
   color: #FFFFFF;
 }
 
 .btn-primary:hover {
-  background: #16352D;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(26, 60, 52, 0.2);
+  background: #162335;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(16, 112, 90, 0.3);
 }
 
 .btn-secondary {
-  background: #2A4066;
+  background: #3b5c94;
   color: #FFFFFF;
 }
 
 .btn-secondary:hover {
-  background: #223854;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(42, 64, 102, 0.2);
+  background: #397b8f;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(9, 99, 255, 0.3);
 }
 
 .btn-danger {
@@ -163,12 +285,12 @@ body {
 
 .btn-danger:hover {
   background: #C82333;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.3);
 }
 
 .current-profile {
-  background: #2A4066;
+  background: #3c5c94;
   color: #FFFFFF;
   padding: 12px 20px;
   border-radius: 8px;
@@ -179,14 +301,18 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  animation: slideInFromRight 0.6s ease-out forwards;
 }
 
+/* Tabla semanal */
 .weekly-table-container {
   background: #FFFFFF;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border: 1px solid #E0E4E8;
+  animation: fadeIn 0.8s ease-out 0.4s forwards;
+  opacity: 0;
 }
 
 .weekly-table-container h2 {
@@ -209,9 +335,11 @@ table {
   border-collapse: collapse;
   background: #FFFFFF;
 }
-
+.total-row,th{
+  background: #003057;
+}
 th {
-  background: #1A3C34;
+
   color: #FFFFFF;
   padding: 12px;
   font-weight: 600;
@@ -227,12 +355,17 @@ td {
   font-weight: 500;
 }
 
+tr {
+  transition: all 0.3s ease;
+}
+
 tr:hover {
   background: #F9FAFB;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .total-row {
-  background: #1A3C34;
   font-weight: 700;
   color: #FFFFFF;
 }
@@ -244,12 +377,19 @@ tr:hover {
 }
 
 .hours-badge {
-  background: #2A4066;
+  border: solid white 1px ;
+  background: #003057;
   color: #FFFFFF;
   padding: 6px 12px;
   border-radius: 12px;
   font-weight: 600;
   font-size: 0.9rem;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.hours-badge:hover {
+  transform: scale(1.1);
 }
 
 .no-hours {
@@ -258,6 +398,7 @@ tr:hover {
   font-size: 1rem;
 }
 
+/* Overlay y modal */
 #overlay {
   display: none;
   position: fixed;
@@ -285,10 +426,13 @@ tr:hover {
   width: 90%;
   text-align: center;
   border: 1px solid #E0E4E8;
+  animation: modalAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  transform-origin: center;
+  opacity: 0;
 }
 
 #confirmacion h3 {
-  color: #2A4066;
+  color: #325ba1;
   margin-bottom: 15px;
   font-size: 1.3rem;
   font-weight: 600;
@@ -310,6 +454,16 @@ tr:hover {
   justify-content: center;
 }
 
+.modal-buttons .btn {
+  transition: all 0.3s ease;
+}
+
+.modal-buttons .btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Mensajes de error y éxito */
 .error-section {
   background: #DC3545;
   color: #FFFFFF;
@@ -318,6 +472,7 @@ tr:hover {
   margin-bottom: 15px;
   text-align: center;
   display: none;
+  animation: shake 0.5s ease-out forwards;
 }
 
 .error-section p {
@@ -325,6 +480,19 @@ tr:hover {
   font-size: 1rem;
 }
 
+.success-message {
+  background: #1A3C34;
+  color: #FFFFFF;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin: 15px 0;
+  text-align: center;
+  font-weight: 600;
+  display: none;
+  animation: bounceIn 0.6s ease-out forwards;
+}
+
+/* Indicadores */
 .day-name {
   font-weight: 600;
   color: #2A4066;
@@ -351,14 +519,10 @@ tr:hover {
 }
 
 .offline-indicator.online {
-  background: #1A3C34;
+  background: #009213;
 }
 
-@keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
+/* Loading */
 .loading {
   text-align: center;
   padding: 30px;
@@ -366,27 +530,13 @@ tr:hover {
 }
 
 .loading i {
-  font-size: 1.8rem;
-  animation: spin 1s linear infinite;
+  font-size: 2.5rem;
+  color: #1A3C34;
+  animation: pulseSpin 1.5s ease-in-out infinite;
   margin-bottom: 10px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.success-message {
-  background: #1A3C34;
-  color: #FFFFFF;
-  padding: 12px 20px;
-  border-radius: 8px;
-  margin: 15px 0;
-  text-align: center;
-  font-weight: 600;
-  display: none;
-}
-
+/* Responsive */
 @media (max-width: 768px) {
   .container {
     padding: 0 10px;
@@ -416,5 +566,13 @@ tr:hover {
   .btn {
     width: 100%;
     margin-bottom: 10px;
+  }
+  
+  .main-card {
+    padding: 20px;
+  }
+  
+  .weekly-table-container {
+    padding: 15px;
   }
 }
